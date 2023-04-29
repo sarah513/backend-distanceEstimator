@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\vehicle-distance-estimationV2",
+    "\\vehicle-distance-estimationV2\\distance-estimator",
+    "\\vehicle-distance-estimationV2\\yolov5-master"
+  ],
+  "SelectedNode": "\\vehicle-distance-estimationV2\\distance-estimator\\inference.py",
+  "PreviewInSolutionExplorer": false
+}
