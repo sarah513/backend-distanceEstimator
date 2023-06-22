@@ -1,8 +1,8 @@
 from flask import Flask, request, jsonify
 from PIL import Image
-import detect_ahmed
+# import detect_ahmed
 import os
-from flask_cors import CORS,cross_origin
+# from flask_cors import CORS,cross_origin
 from io import BytesIO
 import cv2
 import base64
@@ -17,23 +17,36 @@ import time
 from playsound import playsound
 from keras.models import model_from_json
 from sklearn.preprocessing import StandardScaler
+# from flask import Flask, jsonify, request
+from flask import Flask, render_template
+from flask_cors import CORS,cross_origin 
 
 app = Flask(__name__)
-cors = CORS(app)
+# app.config['SECRET_KEY'] = 'secret!'
+# socketio = SocketIO(app,cors_allowed_origins="*")
+# cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Range'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+    response.headers['Access-Control-Expose-Headers']= 'Content-Length,Content-Range'
+    return response
 # model=torch.load("yolov5/yolov5x.pt",map_location='cpu')
-model= torch.hub.load("./", "custom",path="yolov5x.pt",source="local")
+# model= torch.hub.load("./", "custom",path="yolov5x.pt",source="local")
+model= torch.hub.load("./", "custom",path="last_7.pt",source="local")
 # di=distance_estimation(labels,data,r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator\models\model@1535477330.json',r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator\models\model@1535477330.h5',r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator')
-json_file = open(r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator\models\model@1535477330.json', 'r')
+json_file = open(r'..\distance-estimator\models\model@1535477330.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
 loaded_model = model_from_json(loaded_model_json)
 loaded_model.compile(loss='mean_squared_error', optimizer='adam')
 # load weights into new model
-loaded_model.load_weights(r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator\models\model@1535477330.h5')
+loaded_model.load_weights(r'..\distance-estimator\models\model@1535477330.h5')
 print("Loaded model from disk")
 
-def distance_estimation(labels,information,model,weights,results_dir):
+def distance_estimation(labels,information):
     df = pd.DataFrame(information)
     print(len(df)==0)
     if(len(df)==0):
@@ -62,15 +75,16 @@ def distance_estimation(labels,information,model,weights,results_dir):
 
     return df_result
 
-@app.route("/",methods=["POST"])
-def done():
-    print('shghaal')
-    return jsonify({'msg':'mya mya shghal'})
+# @app.route("/",methods=["GET"])
+# def done():
+#     print('shghaal')
+#     return jsonify({'msg':'mya mya shghal'})  request.form['image']
 
 @app.route("/im_size", methods=["POST"])
 def process_image():
     filestr = request.form['image']
     filestr=filestr.replace('data:image/png;base64,','')
+    filestr=filestr.replace('data:image/jpeg;base64,','')
     # while len(filestr) % 4 != 0:
     #     print(len(filestr))
     #     filestr += '='
@@ -109,13 +123,14 @@ def process_image():
         originalvideoWidth = originalvideoSize[1]
         imgHeight = originalvideoHieght
         imgWidth = originalvideoWidth
-        scaledX1 = (x1/w)*originalvideoWidth
+
+        scaledX1 = x1
         scaledX1s.append(scaledX1)
-        scaledX2 = (x2/w)*originalvideoWidth
+        scaledX2 = x2
         scaledX2s.append(scaledX2)
-        scaledY1 =( y1/h)*originalvideoHieght
+        scaledY1 =y1
         scaledY1s.append(scaledY1)
-        scaledY2 = (y2/h )*originalvideoHieght
+        scaledY2 = y2
         scaledY2s.append(scaledY2)
     data = {
     'xmin': x1s,
@@ -128,12 +143,16 @@ def process_image():
     'scaled_ymax':scaledY2s
     }
     print(data)
-    di=distance_estimation(labels,data,r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator\models\model@1535477330.json',r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator\models\model@1535477330.h5',r'F:\4th 2\GP\distance_estmation\vehicle-distance-estimationV2\distance-estimator')
+    di=distance_estimation(labels,data)
     print('hello',di)
     # if di!=[]:
+    # di=di.to_json()
+    # emit('sayHiback',di)
+    # return jsonify({'msg': 'success','test':di})
+    print(type(di))
+    
     di=di.to_json()
     return jsonify({'msg': 'success','test':di})
-    # return jsonify({'msg': 'success','test':di})
 
     # print('result---->')
     # print(test)
